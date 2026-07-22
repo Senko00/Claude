@@ -1,15 +1,13 @@
 import json
 import re
 import urllib.parse
-import uuid
 from pathlib import Path
 
 import requests
 
 import config
 
-GIGACHAT_AUTH_URL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
-GIGACHAT_API_URL = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+YANDEXGPT_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
 
 PROMPT = """
 Ты — SMM-редактор Симбирского кранового завода (производство башенных
@@ -26,54 +24,30 @@ PROMPT = """
 """
 
 
-def _ssl_verify():
-    if config.GIGACHAT_CA_BUNDLE:
-        return config.GIGACHAT_CA_BUNDLE
-    if config.GIGACHAT_INSECURE_SSL:
-        return False
-    return True
-
-
-def _get_access_token() -> str:
-    if not config.GIGACHAT_API_KEY:
-        raise RuntimeError("GIGACHAT_API_KEY не задан в .env")
-
-    response = requests.post(
-        GIGACHAT_AUTH_URL,
-        headers={
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-            "RqUID": str(uuid.uuid4()),
-            "Authorization": f"Basic {config.GIGACHAT_API_KEY}",
-        },
-        data={"scope": config.GIGACHAT_SCOPE},
-        verify=_ssl_verify(),
-        timeout=30,
-    )
-    response.raise_for_status()
-    return response.json()["access_token"]
-
-
 def generate_news() -> dict:
-    token = _get_access_token()
+    if not config.YANDEX_API_KEY or not config.YANDEX_FOLDER_ID:
+        raise RuntimeError("YANDEX_API_KEY / YANDEX_FOLDER_ID не заданы в .env")
 
     response = requests.post(
-        GIGACHAT_API_URL,
+        YANDEXGPT_URL,
         headers={
             "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Api-Key {config.YANDEX_API_KEY}",
+            "x-folder-id": config.YANDEX_FOLDER_ID,
         },
         json={
-            "model": "GigaChat",
-            "messages": [{"role": "user", "content": PROMPT}],
-            "temperature": 0.9,
+            "modelUri": f"gpt://{config.YANDEX_FOLDER_ID}/{config.YANDEX_MODEL}",
+            "completionOptions": {
+                "stream": False,
+                "temperature": 0.9,
+                "maxTokens": "2000",
+            },
+            "messages": [{"role": "user", "text": PROMPT}],
         },
-        verify=_ssl_verify(),
         timeout=60,
     )
     response.raise_for_status()
-    raw_text = response.json()["choices"][0]["message"]["content"]
+    raw_text = response.json()["result"]["alternatives"][0]["message"]["text"]
 
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
     return json.loads(cleaned)

@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+drafts/pending/*
+drafts/published/*
+drafts/rejected/*
+!drafts/pending/.gitkeep
+!drafts/published/.gitkeep
+!drafts/rejected/.gitkeep

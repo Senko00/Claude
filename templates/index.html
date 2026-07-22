@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Модерация новостей — Симбирский крановый завод</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; background: #f5f5f5; }
+    h1 { font-size: 1.4rem; }
+    .flash { background: #fff3cd; border: 1px solid #ffe08a; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+    .draft { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+    .draft img { max-width: 100%; border-radius: 6px; }
+    .draft h2 { margin: 0.5rem 0; font-size: 1.1rem; }
+    .draft p { white-space: pre-wrap; color: #333; }
+    .actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+    button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
+    .approve { background: #2e7d32; color: #fff; }
+    .reject { background: #c62828; color: #fff; }
+    .empty { color: #777; }
+  </style>
+</head>
+<body>
+  <h1>Черновики новостей на проверке</h1>
+
+  {% with messages = get_flashed_messages() %}
+    {% for m in messages %}
+      <div class="flash">{{ m }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if not drafts %}
+    <p class="empty">Пока нет черновиков. Запустите generator.py, чтобы AI придумал новость.</p>
+  {% endif %}
+
+  {% for d in drafts %}
+    <div class="draft">
+      <img src="/drafts/pending/{{ d.dir }}/image.jpg" alt="">
+      <h2>{{ d.title }}</h2>
+      <p>{{ d.text }}</p>
+      <div class="actions">
+        <form method="post" action="/draft/{{ d.dir }}/approve">
+          <button class="approve" type="submit">✅ Одобрить и опубликовать</button>
+        </form>
+        <form method="post" action="/draft/{{ d.dir }}/reject">
+          <button class="reject" type="submit">❌ Отклонить</button>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</body>
+</html>

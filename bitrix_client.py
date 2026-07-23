@@ -3,31 +3,29 @@ import base64
 import requests
 
 
-def post_news(webhook_url: str, iblock_id: str, title: str, text: str, image_path: str) -> dict:
-    if not webhook_url or not iblock_id:
-        raise RuntimeError("BITRIX_WEBHOOK_URL / BITRIX_IBLOCK_ID не заданы в .env")
+def post_news(endpoint_url: str, secret: str, iblock_id: str, title: str, text: str, image_path: str) -> dict:
+    if not endpoint_url or not secret or not iblock_id:
+        raise RuntimeError(
+            "BITRIX_ENDPOINT_URL / BITRIX_ENDPOINT_SECRET / BITRIX_IBLOCK_ID не заданы в .env"
+        )
 
     with open(image_path, "rb") as f:
         image_b64 = base64.b64encode(f.read()).decode("utf-8")
 
-    fields = {
-        "IBLOCK_ID": iblock_id,
-        "NAME": title,
-        "ACTIVE": "Y",
-        "PREVIEW_TEXT": text[:255],
-        "DETAIL_TEXT": text,
-        "DETAIL_TEXT_TYPE": "text",
-        "PREVIEW_PICTURE": {"fileData": ["cover.jpg", image_b64]},
-        "DETAIL_PICTURE": {"fileData": ["cover.jpg", image_b64]},
+    payload = {
+        "secret": secret,
+        "iblock_id": int(iblock_id),
+        "title": title,
+        "text": text,
+        "image_base64": image_b64,
     }
 
-    url = webhook_url.rstrip("/") + "/iblock.element.add.json"
-    response = requests.post(url, json={"fields": fields}, timeout=60)
+    response = requests.post(endpoint_url, json=payload, timeout=60)
     if not response.ok:
         raise RuntimeError(
-            f"Bitrix REST вернул ошибку {response.status_code}: {response.text}"
+            f"Bitrix-эндпоинт вернул ошибку {response.status_code}: {response.text}"
         )
     data = response.json()
     if "error" in data:
-        raise RuntimeError(f"Bitrix REST error: {data}")
+        raise RuntimeError(f"Bitrix-эндпоинт вернул ошибку: {data}")
     return data["result"]

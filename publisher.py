@@ -12,7 +12,8 @@ def publish(draft_dir: Path) -> None:
 
     vk_client.post_news(config.VK_TOKEN, config.VK_GROUP_ID, meta["title"], meta["text"])
     bitrix_client.post_news(
-        config.BITRIX_WEBHOOK_URL,
+        config.BITRIX_ENDPOINT_URL,
+        config.BITRIX_ENDPOINT_SECRET,
         config.BITRIX_IBLOCK_ID,
         meta["title"],
         meta["text"],

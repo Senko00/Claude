@@ -11,5 +11,6 @@ YANDEX_API_KEY = os.environ.get("YANDEX_API_KEY")
 YANDEX_FOLDER_ID = os.environ.get("YANDEX_FOLDER_ID")
 YANDEX_MODEL = os.environ.get("YANDEX_MODEL", "yandexgpt-lite")
 
-BITRIX_WEBHOOK_URL = os.environ.get("BITRIX_WEBHOOK_URL")
+BITRIX_ENDPOINT_URL = os.environ.get("BITRIX_ENDPOINT_URL")
+BITRIX_ENDPOINT_SECRET = os.environ.get("BITRIX_ENDPOINT_SECRET")
 BITRIX_IBLOCK_ID = os.environ.get("BITRIX_IBLOCK_ID")

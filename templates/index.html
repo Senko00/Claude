@@ -60,7 +60,7 @@
       color: var(--muted);
       margin: 0.75rem 0 0.35rem;
     }
-    select, textarea {
+    select, textarea, input[type="text"] {
       width: 100%;
       padding: 0.6rem 0.7rem;
       border: 1px solid var(--border);
@@ -173,13 +173,22 @@
     <div class="panel">
       <h2>Сгенерировать новую новость</h2>
       <form method="post" action="/generate">
-        <label for="theme">Тема</label>
-        <select name="theme" id="theme">
-          <option value="">Случайная</option>
-          {% for t in themes %}
-            <option value="{{ t }}">{{ t }}</option>
+        <label for="style">Формат поста</label>
+        <select name="style" id="style">
+          <option value="">Случайный</option>
+          {% for key, s in styles.items() %}
+            <option value="{{ key }}">{{ s.label }}</option>
           {% endfor %}
         </select>
+
+        <label for="topic">Тема (впишите свою или выберите подсказку)</label>
+        <input type="text" list="topic-suggestions" name="topic" id="topic"
+          placeholder="Например: сроки монтажа кран-балки">
+        <datalist id="topic-suggestions">
+          {% for t in topics %}
+            <option value="{{ t }}">
+          {% endfor %}
+        </datalist>
 
         <label for="facts">Факты для новости (необязательно)</label>
         <textarea name="facts" id="facts" rows="3"
@@ -203,7 +212,7 @@
       <div class="draft">
         <img src="/drafts/pending/{{ d.dir }}/image.jpg" alt="">
         <div class="draft-body">
-          {% if d.theme %}<span class="theme">{{ d.theme }}</span>{% endif %}
+          {% if d.topic %}<span class="theme">{{ d.topic }}</span>{% endif %}
           <h3>{{ d.title }}</h3>
           <p>{{ d.text }}</p>
 

@@ -32,15 +32,18 @@ def load_drafts() -> list:
 
 @app.route("/")
 def index():
-    return render_template("index.html", drafts=load_drafts(), themes=ai_client.THEMES)
+    return render_template(
+        "index.html", drafts=load_drafts(), styles=ai_client.STYLES, topics=ai_client.TOPICS
+    )
 
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    theme = request.form.get("theme") or None
+    style = request.form.get("style") or None
+    topic = request.form.get("topic") or None
     facts = request.form.get("facts") or None
     try:
-        draft_id = generator.generate(theme=theme, facts=facts)
+        draft_id = generator.generate(style=style, topic=topic, facts=facts)
         flash(f"Новый черновик «{draft_id}» готов, проверьте его ниже")
     except Exception as exc:  # noqa: BLE001 - показываем любую ошибку генерации редактору
         flash(f"Ошибка генерации: {exc}")

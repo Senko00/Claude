@@ -25,11 +25,11 @@ def _recent_titles(limit: int = 8) -> list[str]:
     return titles
 
 
-def generate(theme: str | None = None, facts: str | None = None) -> str:
-    theme = theme or random.choice(ai_client.THEMES)
+def generate(style: str | None = None, topic: str | None = None, facts: str | None = None) -> str:
+    topic = topic or random.choice(ai_client.TOPICS)
     avoid_titles = _recent_titles()
 
-    news = ai_client.generate_news(theme=theme, facts=facts, avoid_titles=avoid_titles)
+    news = ai_client.generate_news(style=style, topic=topic, facts=facts, avoid_titles=avoid_titles)
 
     draft_id = f"{datetime.datetime.now():%Y%m%d-%H%M%S}-{uuid.uuid4().hex[:6]}"
     draft_dir = PENDING_DIR / draft_id
@@ -42,7 +42,8 @@ def generate(theme: str | None = None, facts: str | None = None) -> str:
         "id": draft_id,
         "title": news["title"],
         "text": news["text"],
-        "theme": theme,
+        "topic": topic,
+        "style": news.get("style"),
         "created_at": datetime.datetime.now().isoformat(),
         "status": "pending",
     }
@@ -54,11 +55,12 @@ def generate(theme: str | None = None, facts: str | None = None) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--theme", default=None)
+    parser.add_argument("--style", default=None)
+    parser.add_argument("--topic", default=None)
     parser.add_argument("--facts", default=None)
     args = parser.parse_args()
 
-    draft_id = generate(theme=args.theme, facts=args.facts)
+    draft_id = generate(style=args.style, topic=args.topic, facts=args.facts)
     print(f"Черновик создан: {draft_id}")
 
 

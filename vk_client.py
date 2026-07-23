@@ -9,8 +9,18 @@ def post_news(token: str, group_id: str, title: str, text: str, link: str | None
     vk = session.get_api()
 
     message = f"{title}\n\n{text}"
-    kwargs = dict(owner_id=-int(group_id), from_group=1, message=message)
+
     if link:
         # VK разворачивает ссылку в карточку с картинкой из og:image страницы.
-        kwargs["attachments"] = link
-    vk.wall.post(**kwargs)
+        # Если на странице нет подходящей картинки, VK отклоняет весь пост
+        # ("link_photo_sizing_rule") — в этом случае публикуем без превью,
+        # чтобы текст всё равно ушёл.
+        try:
+            vk.wall.post(
+                owner_id=-int(group_id), from_group=1, message=message, attachments=link
+            )
+            return
+        except Exception:
+            pass
+
+    vk.wall.post(owner_id=-int(group_id), from_group=1, message=message)

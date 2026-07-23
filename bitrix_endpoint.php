@@ -79,7 +79,11 @@ if ($id) {
     $url = null;
     $ibProps = CIBlock::GetArrayByID($iblockId);
     if ($ibProps && !empty($ibProps["DETAIL_PAGE_URL"])) {
-        $path = CIBlockElement::GetIBlockElementURL($iblockId, $id, $ibProps["DETAIL_PAGE_URL"]);
+        $path = str_replace(
+            ["#SITE_DIR#", "#ELEMENT_ID#", "#ELEMENT_CODE#", "#IBLOCK_ID#", "#IBLOCK_CODE#"],
+            [SITE_DIR, $id, $code, $iblockId, (string)($ibProps["CODE"] ?? "")],
+            $ibProps["DETAIL_PAGE_URL"]
+        );
         $url = "https://simkran.ru" . $path;
     }
     echo json_encode(["result" => ["ID" => $id, "URL" => $url]]);

@@ -1,18 +1,38 @@
+import argparse
 import datetime
 import json
+import random
 import uuid
 from pathlib import Path
 
 import ai_client
 
-DRAFTS_DIR = Path(__file__).parent / "drafts" / "pending"
+BASE_DIR = Path(__file__).parent
+PENDING_DIR = BASE_DIR / "drafts" / "pending"
+PUBLISHED_DIR = BASE_DIR / "drafts" / "published"
 
 
-def main() -> None:
-    news = ai_client.generate_news()
+def _recent_titles(limit: int = 8) -> list[str]:
+    titles = []
+    if not PUBLISHED_DIR.exists():
+        return titles
+    dirs = sorted(PUBLISHED_DIR.iterdir(), key=lambda p: p.name, reverse=True)
+    for d in dirs[:limit]:
+        meta_file = d / "draft.json"
+        if meta_file.exists():
+            meta = json.loads(meta_file.read_text(encoding="utf-8"))
+            titles.append(meta.get("title", ""))
+    return titles
+
+
+def generate(theme: str | None = None, facts: str | None = None) -> str:
+    theme = theme or random.choice(ai_client.THEMES)
+    avoid_titles = _recent_titles()
+
+    news = ai_client.generate_news(theme=theme, facts=facts, avoid_titles=avoid_titles)
 
     draft_id = f"{datetime.datetime.now():%Y%m%d-%H%M%S}-{uuid.uuid4().hex[:6]}"
-    draft_dir = DRAFTS_DIR / draft_id
+    draft_dir = PENDING_DIR / draft_id
     draft_dir.mkdir(parents=True, exist_ok=True)
 
     image_path = draft_dir / "image.jpg"
@@ -22,12 +42,23 @@ def main() -> None:
         "id": draft_id,
         "title": news["title"],
         "text": news["text"],
+        "theme": theme,
         "created_at": datetime.datetime.now().isoformat(),
         "status": "pending",
     }
     (draft_dir / "draft.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    return draft_id
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--theme", default=None)
+    parser.add_argument("--facts", default=None)
+    args = parser.parse_args()
+
+    draft_id = generate(theme=args.theme, facts=args.facts)
     print(f"Черновик создан: {draft_id}")
 
 

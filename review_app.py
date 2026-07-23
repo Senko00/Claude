@@ -1,9 +1,13 @@
 import json
 import shutil
+import webbrowser
 from pathlib import Path
+from threading import Timer
 
-from flask import Flask, flash, redirect, render_template, url_for
+from flask import Flask, flash, redirect, render_template, request, url_for
 
+import ai_client
+import generator
 import publisher
 
 BASE_DIR = Path(__file__).parent
@@ -28,7 +32,31 @@ def load_drafts() -> list:
 
 @app.route("/")
 def index():
-    return render_template("index.html", drafts=load_drafts())
+    return render_template("index.html", drafts=load_drafts(), themes=ai_client.THEMES)
+
+
+@app.route("/generate", methods=["POST"])
+def generate():
+    theme = request.form.get("theme") or None
+    facts = request.form.get("facts") or None
+    try:
+        draft_id = generator.generate(theme=theme, facts=facts)
+        flash(f"Новый черновик «{draft_id}» готов, проверьте его ниже")
+    except Exception as exc:  # noqa: BLE001 - показываем любую ошибку генерации редактору
+        flash(f"Ошибка генерации: {exc}")
+    return redirect(url_for("index"))
+
+
+@app.route("/draft/<draft_id>/image", methods=["POST"])
+def replace_image(draft_id: str):
+    draft_dir = PENDING_DIR / draft_id
+    file = request.files.get("image")
+    if not file or file.filename == "":
+        flash("Файл не выбран")
+        return redirect(url_for("index"))
+    file.save(draft_dir / "image.jpg")
+    flash(f"Картинка для «{draft_id}» заменена")
+    return redirect(url_for("index"))
 
 
 @app.route("/draft/<draft_id>/approve", methods=["POST"])
@@ -56,4 +84,5 @@ def reject(draft_id: str):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    Timer(1.5, lambda: webbrowser.open("http://localhost:5000")).start()
+    app.run(debug=False, port=5000)

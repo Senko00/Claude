@@ -76,7 +76,13 @@ if ($tmpFile && file_exists($tmpFile)) {
 }
 
 if ($id) {
-    echo json_encode(["result" => ["ID" => $id]]);
+    $url = null;
+    $ibProps = CIBlock::GetArrayByID($iblockId);
+    if ($ibProps && !empty($ibProps["DETAIL_PAGE_URL"])) {
+        $path = CIBlockElement::GetIBlockElementURL($iblockId, $id, $ibProps["DETAIL_PAGE_URL"]);
+        $url = "https://simkran.ru" . $path;
+    }
+    echo json_encode(["result" => ["ID" => $id, "URL" => $url]]);
 } else {
     http_response_code(500);
     echo json_encode(["error" => $el->LAST_ERROR]);

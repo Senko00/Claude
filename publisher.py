@@ -21,5 +21,10 @@ def publish(draft_dir: Path) -> None:
     article_url = bitrix_result.get("URL")
 
     vk_client.post_news(
-        config.VK_TOKEN, config.VK_GROUP_ID, meta["title"], meta["text"], link=article_url
+        config.VK_TOKEN,
+        config.VK_GROUP_ID,
+        meta["title"],
+        meta["text"],
+        image_path=str(image_path),
+        link=article_url,
     )

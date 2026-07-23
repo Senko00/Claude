@@ -7,9 +7,8 @@ load_dotenv()
 VK_TOKEN = os.environ.get("VK_TOKEN")
 VK_GROUP_ID = os.environ.get("VK_GROUP_ID")
 
-YANDEX_API_KEY = os.environ.get("YANDEX_API_KEY")
-YANDEX_FOLDER_ID = os.environ.get("YANDEX_FOLDER_ID")
-YANDEX_MODEL = os.environ.get("YANDEX_MODEL", "yandexgpt-lite")
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b-instruct")
 
 BITRIX_ENDPOINT_URL = os.environ.get("BITRIX_ENDPOINT_URL")
 BITRIX_ENDPOINT_SECRET = os.environ.get("BITRIX_ENDPOINT_SECRET")

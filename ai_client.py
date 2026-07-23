@@ -7,8 +7,6 @@ import requests
 
 import config
 
-YANDEXGPT_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
-
 STYLES = {
     "faq": {
         "label": "Ответ на частый вопрос клиента",
@@ -25,8 +23,8 @@ STYLES = {
         "instruction": (
             "Формат поста — практический совет для тех, кто выбирает или "
             "готовится заказать кран. Разбери конкретный практический нюанс "
-            "(на что смотреть при выборе, как подготовить площадку, как 
-            продлить срок службы и т.п.) с конкретикой, а не общими словами."
+            "(на что смотреть при выборе, как подготовить площадку, как "
+            "продлить срок службы и т.п.) с конкретикой, а не общими словами."
         ),
     },
     "behind_scenes": {
@@ -153,35 +151,34 @@ def _build_prompt(style, topic, facts, avoid_titles) -> str:
 
 
 def generate_news(style=None, topic=None, facts=None, avoid_titles=None) -> dict:
-    if not config.YANDEX_API_KEY or not config.YANDEX_FOLDER_ID:
-        raise RuntimeError("YANDEX_API_KEY / YANDEX_FOLDER_ID не заданы в .env")
-
     prompt, used_style = _build_prompt(style, topic, facts, avoid_titles or [])
 
-    response = requests.post(
-        YANDEXGPT_URL,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Api-Key {config.YANDEX_API_KEY}",
-            "x-folder-id": config.YANDEX_FOLDER_ID,
-        },
-        json={
-            "modelUri": f"gpt://{config.YANDEX_FOLDER_ID}/{config.YANDEX_MODEL}/latest",
-            "completionOptions": {
+    try:
+        response = requests.post(
+            f"{config.OLLAMA_URL}/api/generate",
+            json={
+                "model": config.OLLAMA_MODEL,
+                "prompt": prompt,
+                "format": "json",
                 "stream": False,
-                "temperature": 0.95,
-                "maxTokens": "2000",
+                "options": {"temperature": 0.9},
             },
-            "messages": [{"role": "user", "text": prompt}],
-        },
-        timeout=60,
-    )
-    if not response.ok:
-        raise RuntimeError(
-            f"YandexGPT API вернул ошибку {response.status_code}: {response.text}"
+            # Локальная модель на слабом CPU может генерировать текст
+            # несколько минут — это нормально, ждём.
+            timeout=600,
         )
-    raw_text = response.json()["result"]["alternatives"][0]["message"]["text"]
+    except requests.exceptions.ConnectionError as exc:
+        raise RuntimeError(
+            "Не удалось подключиться к Ollama на "
+            f"{config.OLLAMA_URL}. Убедитесь, что Ollama установлена и запущена "
+            f"(значок в трее), и что модель {config.OLLAMA_MODEL} скачана "
+            f"(ollama pull {config.OLLAMA_MODEL})."
+        ) from exc
 
+    if not response.ok:
+        raise RuntimeError(f"Ollama вернула ошибку {response.status_code}: {response.text}")
+
+    raw_text = response.json()["response"]
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
     news = json.loads(cleaned)
     news["style"] = used_style

@@ -40,9 +40,19 @@ if (!$iblockId || $title === "" || $text === "") {
     exit;
 }
 
+$code = CUtil::translit($title, "ru", [
+    "max_len" => 100,
+    "change_case" => "L",
+    "replace_space" => "-",
+    "replace_other" => "-",
+    "delete_repeat_replace" => true,
+]);
+$code = trim($code, "-") . "-" . substr(md5(uniqid("", true)), 0, 6);
+
 $fields = [
     "IBLOCK_ID" => $iblockId,
     "NAME" => $title,
+    "CODE" => $code,
     "ACTIVE" => "Y",
     "PREVIEW_TEXT" => mb_substr($text, 0, 255),
     "DETAIL_TEXT" => $text,

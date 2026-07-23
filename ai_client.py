@@ -36,7 +36,7 @@ def generate_news() -> dict:
             "x-folder-id": config.YANDEX_FOLDER_ID,
         },
         json={
-            "modelUri": f"gpt://{config.YANDEX_FOLDER_ID}/{config.YANDEX_MODEL}",
+            "modelUri": f"gpt://{config.YANDEX_FOLDER_ID}/{config.YANDEX_MODEL}/latest",
             "completionOptions": {
                 "stream": False,
                 "temperature": 0.9,
@@ -46,7 +46,10 @@ def generate_news() -> dict:
         },
         timeout=60,
     )
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(
+            f"YandexGPT API вернул ошибку {response.status_code}: {response.text}"
+        )
     raw_text = response.json()["result"]["alternatives"][0]["message"]["text"]
 
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()

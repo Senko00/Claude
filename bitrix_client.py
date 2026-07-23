@@ -23,7 +23,10 @@ def post_news(webhook_url: str, iblock_id: str, title: str, text: str, image_pat
 
     url = webhook_url.rstrip("/") + "/iblock.element.add.json"
     response = requests.post(url, json={"fields": fields}, timeout=60)
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(
+            f"Bitrix REST вернул ошибку {response.status_code}: {response.text}"
+        )
     data = response.json()
     if "error" in data:
         raise RuntimeError(f"Bitrix REST error: {data}")
